@@ -11,7 +11,12 @@ const {
   updateServiceStatus,
 } = require("../controllers/serviceController");
 
-const { verifyAdmin, verifyVendor } = require("../middlewares/authMiddleware");
+const {
+  verifyAuth,
+  verifyAdmin,
+  verifyVendor,
+  verifyCustomer,
+} = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -27,7 +32,7 @@ router.patch("/my-services/:id", verifyVendor, updateMyService);
 // Vendor: Delete own service
 router.delete("/my-services/:id", verifyVendor, deleteMyService);
 
-// Get all approved services
+// Get all approved services (Public)
 router.get("/", getAllServices);
 
 // Admin: Get pending services
@@ -36,7 +41,7 @@ router.get("/pending", verifyAdmin, getPendingServices);
 // Admin: Approve or reject a service
 router.patch("/:id/status", verifyAdmin, updateServiceStatus);
 
-// Get a single approved service by ID
-router.get("/:id", getServiceById);
+// Any authenticated user: Get a single approved service
+router.get("/:id", verifyAuth, getServiceById);
 
 module.exports = router;

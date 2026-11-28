@@ -5,8 +5,10 @@ const { ObjectId } = require("mongodb");
 const createBooking = async (req, res) => {
   try {
     const db = getDB();
+
     const { serviceId, eventDate, eventLocation, guestCount, message } =
       req.body;
+
     const customerId = req.user.id;
 
     if (!serviceId || !eventDate || !eventLocation || !guestCount) {
@@ -44,6 +46,13 @@ const createBooking = async (req, res) => {
       });
     }
 
+    if (!eventLocation.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Event location is required.",
+      });
+    }
+
     const service = await db.collection("services").findOne({
       _id: new ObjectId(serviceId),
       status: "approved",
@@ -56,10 +65,29 @@ const createBooking = async (req, res) => {
       });
     }
 
+    // Prevent vendors from booking their own services
     if (String(service.vendorId) === String(customerId)) {
       return res.status(403).json({
         success: false,
         message: "You cannot book your own service.",
+      });
+    }
+
+    // Prevent duplicate active bookings for the same service and event date
+    const existingBooking = await db.collection("bookings").findOne({
+      serviceId: service._id,
+      customerId,
+      eventDate,
+      status: {
+        $in: ["pending", "accepted"],
+      },
+    });
+
+    if (existingBooking) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "You already have an active booking for this service on this event date.",
       });
     }
 

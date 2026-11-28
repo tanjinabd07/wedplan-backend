@@ -160,7 +160,7 @@ const getServiceById = async (req, res) => {
     if (!service) {
       return res.status(404).json({
         success: false,
-        message: "Service not found.",
+        message: "Approved service not found.",
       });
     }
 

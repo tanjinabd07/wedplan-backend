@@ -1,19 +1,21 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const bookingRoutes = require("./routes/bookingRoutes");
-const adminRoutes = require("./routes/adminRoutes");
-const subscriptionRoutes = require("./routes/subscriptionRoutes");
-const { handleStripeWebhook } = require("./controllers/webhookController");
 require("dotenv").config();
 
 // MongoDB Atlas SRV DNS workaround
 const dns = require("dns");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+
 const { connectDB } = require("./config/db");
+const { handleStripeWebhook } = require("./controllers/webhookController");
+const userRoutes = require("./routes/userRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const bookingRoutes = require("./routes/bookingRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const subscriptionRoutes = require("./routes/subscriptionRoutes");
 
 const app = express();
 
@@ -26,26 +28,21 @@ app.use(
   }),
 );
 
-// Stripe Webhook Route
+// Stripe Webhook Route (express.json() এর আগে থাকতে হবে)
 app.post(
   "/api/subscriptions/webhook",
   express.raw({ type: "application/json" }),
-  handleStripeWebhook
+  handleStripeWebhook,
 );
 
 app.use(express.json());
 
-// Service Routes
+// API Routes
+app.use("/api/users", userRoutes);
 app.use("/api/services", serviceRoutes);
-
-
-// Image Upload Routes
 app.use("/api/upload", uploadRoutes);
-// Booking Routes
 app.use("/api/bookings", bookingRoutes);
-// Admin Routes
 app.use("/api/admin", adminRoutes);
-
 app.use("/api/subscriptions", subscriptionRoutes);
 
 // Home Route
